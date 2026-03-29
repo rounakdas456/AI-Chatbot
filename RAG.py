@@ -4,34 +4,44 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from transformers import pipeline
 
-# Load dataset
-df = pd.read_csv("C:\\Users\\rouna\\OneDrive\\Desktop\\Courses\\Courses.csv")
+# ------------------------
+# LOAD DATA
+# ------------------------
+df = pd.read_csv("Courses.csv")
 
-# Load embedding model
+# ------------------------
+# EMBEDDINGS
+# ------------------------
 embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Create embeddings
 embeddings = np.array(
     df["Description"].apply(lambda x: embed_model.encode(x)).tolist()
 ).astype("float32")
 
-# FAISS index
-dimension = embeddings.shape[1]
-index = faiss.IndexFlatL2(dimension)
+# ------------------------
+# FAISS INDEX
+# ------------------------
+index = faiss.IndexFlatL2(embeddings.shape[1])
 index.add(embeddings)
 
-# Correct model pipeline
+# ------------------------
+# LLM (CORRECT PIPELINE)
+# ------------------------
 generator = pipeline("text2text-generation", model="google/flan-t5-base")
 
 
-# Search function
+# ------------------------
+# SEARCH FUNCTION
+# ------------------------
 def search(query, k=3):
     query_vec = np.array([embed_model.encode(query)]).astype("float32")
     distances, indices = index.search(query_vec, k)
     return df.iloc[indices[0]]
 
 
-# Recommendation function
+# ------------------------
+# RECOMMEND FUNCTION
+# ------------------------
 def recommend(user_query):
     results = search(user_query)
 
